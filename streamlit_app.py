@@ -1,5 +1,4 @@
 
-Streamlit app · PY
 # -*- coding: utf-8 -*-
 """
 DMI + PSAR + SMA 신호 스크리너 결과를 보여주는 Streamlit 대시보드.
