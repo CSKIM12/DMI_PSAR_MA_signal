@@ -1,6 +1,6 @@
 pandas
 numpy
-FinanceDataReader
+Finance-DataReader
 requests
 openpyxl
 streamlit
