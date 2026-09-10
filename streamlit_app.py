@@ -37,15 +37,22 @@ df = pd.read_csv(RESULTS_PATH)
 # ---- 상단 요약 ----
 scan_time = df["스캔일시"].iloc[0] if (not df.empty and "스캔일시" in df.columns) else None
 
-if scan_time:
-    # "2026-09-09 16:30 (KST)" 형태에서 날짜(종가 기준일)만 뽑아냄
-    try:
-        close_date = datetime.strptime(scan_time.split(" ")[0], "%Y-%m-%d")
-        close_date_label = f"{close_date.month}월 {close_date.day}일"
-    except ValueError:
-        close_date_label = scan_time  # 형식이 예상과 다르면 원문 그대로 표시
+MARKET_CLOSE_HOUR, MARKET_CLOSE_MIN = 15, 30  # 한국 주식시장 정규장 마감 시각
 
-    st.info(f"📅 이 데이터는 **{close_date_label} 종가** 기준입니다.")
+if scan_time:
+    # "2026-09-09 16:30 (KST)" 형태에서 날짜/시각을 함께 파싱
+    try:
+        scan_dt = datetime.strptime(scan_time.split(" (")[0], "%Y-%m-%d %H:%M")
+        date_label = f"{scan_dt.month}월 {scan_dt.day}일"
+        after_close = (scan_dt.hour, scan_dt.minute) >= (MARKET_CLOSE_HOUR, MARKET_CLOSE_MIN)
+        if after_close:
+            st.info(f"📅 이 데이터는 **{date_label} 종가** 기준입니다.")
+        else:
+            st.warning(f"⚠️ 이 데이터는 **{date_label} 장중({scan_dt.strftime('%H:%M')})** 스캔 결과입니다 "
+                       f"— 그날 장마감(15:30) 전에 돌린 거라 최종 종가가 아닐 수 있습니다.")
+    except ValueError:
+        st.info(f"📅 이 데이터는 **{scan_time}** 기준입니다.")
+
 mtime_utc = datetime.fromtimestamp(os.path.getmtime(RESULTS_PATH), tz=timezone.utc)
 mtime = (mtime_utc + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M (KST)")
 
