@@ -23,7 +23,7 @@ DMI + PSAR + EMA 골든크로스 초입 스크리너
 import argparse
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 import pandas as pd
@@ -313,7 +313,7 @@ if __name__ == "__main__":
                             lookback_days=args.lookback, ma_type=args.ma_type)
 
     ma_label = "SMA(단순)정배열초입일" if args.ma_type == "sma" else "EMA(지수)정배열초입일"
-    scan_date = datetime.now().strftime("%Y-%m-%d %H:%M")
+    scan_date = (datetime.now(timezone.utc) + timedelta(hours=9)).strftime("%Y-%m-%d %H:%M (KST)")
 
     if df_result.empty:
         print("조건에 맞는 종목이 없습니다.")
