@@ -1,0 +1,39 @@
+name: Daily DMI+PSAR+SMA Scan
+
+on:
+  schedule:
+    # 매일(월~금) UTC 07:30 = 한국시간(KST) 16:30, 장마감 후 실행
+    - cron: '30 7 * * 1-5'
+  workflow_dispatch: {}   # Actions 탭에서 수동으로도 실행 가능
+
+permissions:
+  contents: write   # 결과 파일을 저장소에 커밋하기 위해 필요
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 종목 유니버스 수집 (시총 3,000억 이상)
+        run: python scripts/naver_export_tickers.py --min-cap 3000 --out tickers_full.txt
+
+      - name: DMI+PSAR+SMA 스크리너 실행
+        run: python scripts/dmi_psar_ema_screener.py --tickers-file tickers_full.txt --out results/latest_signals.csv
+
+      - name: 결과 커밋 & 푸시
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/latest_signals.csv tickers_full.txt
+          git diff --cached --quiet && echo "변경 사항 없음" || git commit -m "일일 스캔 결과 갱신 $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
